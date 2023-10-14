@@ -20,16 +20,6 @@ class GoogleSignInProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future createUserWithEmailAndPassword(
-      String email, String password, BuildContext context) async {
-    await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    notifyListeners();
-    Navigator.of(context).pop();
-  }
-  
   Future logout() async {
     await googleSignIn.signOut();
     FirebaseAuth.instance.signOut();
