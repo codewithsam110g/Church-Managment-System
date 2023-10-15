@@ -1,4 +1,5 @@
 import 'package:church_management_system/pages/objects/Member.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -134,7 +135,8 @@ class _AddNewMemberPageState extends State<AddNewMemberPage> {
     DateTime addedDate = DateTime.now();
     DateTime lastAttended = DateTime.now();
     DatabaseReference ref = FirebaseDatabase.instance.ref();
-    final snapshot = await ref.child("Users/0/prof_nums").get();
+    String uid = FirebaseAuth.instance.currentUser?.uid ?? "";
+    final snapshot = await ref.child("Users/$uid/memberCount").get();
     int id = 0;
     if (snapshot.exists) {
       id = (snapshot.value as int) + 1;
@@ -142,8 +144,8 @@ class _AddNewMemberPageState extends State<AddNewMemberPage> {
 
     Member m = Member(id, name, phoneNumber, email, address, attendance,
         addedDate, lastAttended);
-    ref.child("UserData/Members").child(id.toString()).set(m.toJson());
-    ref.child("Users/0/prof_nums").set(id);
+    ref.child("UserData/Members/$uid").child(id.toString()).set(m.toJson());
+    ref.child("Users/$uid/memberCount").set(id);
   }
 }
 

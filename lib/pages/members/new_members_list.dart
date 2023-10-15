@@ -1,40 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:church_management_system/pages/objects/Member.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
-class NewMembersPage extends StatefulWidget {
-  const NewMembersPage({Key? key}) : super(key: key);
-
-  @override
-  _NewMembersPageState createState() => _NewMembersPageState();
-}
-
-class _NewMembersPageState extends State<NewMembersPage> {
+class NewMembersPage extends StatelessWidget {
+  final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
   final databaseReference = FirebaseDatabase.instance.ref('UserData/Members');
-  List<Member> members = [];
-  bool isDone = false;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchData();
-  }
-
-  Future<void> fetchData() async {
-    DataSnapshot snapshot =
-        await databaseReference.orderByChild("attendance").endAt(0).get();
-    if (snapshot.value != null) {
-      Map data = snapshot.value as Map;
-      data.values.forEach((e) {
-        if (e != null) {
-          Member m = Member.fromMap(e['id'], e);
-          members.add(m);
-        }
-      });
-      isDone = true;
-      setState(() {});
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,20 +13,43 @@ class _NewMembersPageState extends State<NewMembersPage> {
       appBar: AppBar(
         title: const Text('New Members'),
       ),
-      body: isDone
-          ? const Center(child: CircularProgressIndicator())
-          : buildMembersList(),
+      body: FutureBuilder(
+        future: databaseReference
+            .child(uid)
+            .orderByChild("attendance")
+            .endAt(1)
+            .once(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            final data = snapshot.data!.snapshot.value;
+            if (data != null) {
+              // Process data and create a list of member objects
+              // You can use a ListView or other widgets to display the list
+              return buildMembersList(data);
+            } else {
+              return const Center(child: Text('No New members!'));
+            }
+          } else {
+            return const Center(child: Text('No data available.'));
+          }
+        },
+      ),
     );
   }
 
-  Widget buildMembersList() {
-    if (members.isEmpty) {
-      return const Align(
-        alignment: Alignment.center,
-        child: Text("No New Members!"),
-      );
-    }
-
+  Widget buildMembersList(Object data_) {
+    List<dynamic> data = data_ as List;
+    List<Member> members = List.empty(growable: true);
+    data.forEach((e) {
+      if (e != null) {
+        Member m = Member.fromMap(e['id'], e);
+        members.add(m);
+      }
+    });
     return ListView.builder(
       itemCount: members.length,
       itemBuilder: (context, index) {
@@ -64,15 +58,14 @@ class _NewMembersPageState extends State<NewMembersPage> {
           child: Card(
             elevation: 4.0,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  members[index].name,
-                  style: const TextStyle(fontSize: 18.0),
-                ),
-              ),
-            ),
+                padding: const EdgeInsets.all(16.0),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    members[index].name,
+                    style: const TextStyle(fontSize: 18.0),
+                  ),
+                )),
           ),
         );
       },

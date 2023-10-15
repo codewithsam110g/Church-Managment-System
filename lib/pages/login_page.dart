@@ -6,7 +6,6 @@ import 'package:church_management_system/auth.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky,
@@ -15,7 +14,24 @@ class LoginPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const FlutterLogo(size: 100)
+          Column(
+            children: [
+              Image.asset(
+                "assets/icon/icon.jpg",
+                width: 150,
+              ),
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  "Welcome to\n Fire Ministries",
+                  style: TextStyle(fontSize: 18.0),
+                  textAlign: TextAlign.center,
+                ),
+              ).animate().fadeIn(
+                  delay: const Duration(seconds: 3),
+                  duration: const Duration(seconds: 1))
+            ],
+          )
               .animate(delay: const Duration(seconds: 3))
               .custom(
                   duration: const Duration(seconds: 1),

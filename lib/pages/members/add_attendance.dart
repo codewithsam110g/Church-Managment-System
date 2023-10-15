@@ -1,3 +1,5 @@
+import 'package:church_management_system/pages/objects/Profile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:church_management_system/pages/objects/Member.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -10,7 +12,8 @@ class AddAttendancePage extends StatefulWidget {
 }
 
 class _AddAttendancePageState extends State<AddAttendancePage> {
-  final databaseReference = FirebaseDatabase.instance.ref('UserData/Members');
+  String uid = FirebaseAuth.instance.currentUser?.uid ?? "";
+  final databaseReference = FirebaseDatabase.instance.ref('UserData/Members/');
   List<bool> checked = [];
   List<Member> members = [];
 
@@ -21,7 +24,7 @@ class _AddAttendancePageState extends State<AddAttendancePage> {
   }
 
   Future<void> fetchData() async {
-    DataSnapshot snapshot = await databaseReference.get();
+    DataSnapshot snapshot = await databaseReference.child(uid).get();
     if (snapshot.value != null) {
       List<dynamic> data = snapshot.value as List;
       data.forEach((e) {
@@ -35,15 +38,22 @@ class _AddAttendancePageState extends State<AddAttendancePage> {
     }
   }
 
-  void updateAttendance() {
-    final ref = FirebaseDatabase.instance.ref("UserData/Members");
+  void updateAttendance() async {
+    final ref = FirebaseDatabase.instance.ref("UserData/Members/$uid");
+    final currentTime = DateTime.now();
     for (int i = 0; i < members.length; i++) {
       if (checked[i]) {
         ref.child((i + 1).toString()).update({
           "attendance": members[i].attendance + 1,
-          "lastAttended": DateTime.now().toIso8601String()
+          "lastAttended": currentTime.toIso8601String()
         });
       }
+    }
+    final snapshot = await FirebaseDatabase.instance.ref("Users/$uid").get();
+    if (snapshot.exists) {
+      Profile P = Profile.fromMap(snapshot.value as Map);
+      P.lastConductedMeet = currentTime;
+      FirebaseDatabase.instance.ref("Users/$uid").set(P.toJson());
     }
   }
 

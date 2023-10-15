@@ -1,8 +1,10 @@
 import 'package:church_management_system/pages/objects/Member.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class MembersListPage extends StatelessWidget {
+  final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
   final databaseReference = FirebaseDatabase.instance.ref('UserData/Members');
 
   @override
@@ -12,7 +14,7 @@ class MembersListPage extends StatelessWidget {
         title: const Text('Members List'),
       ),
       body: FutureBuilder(
-        future: databaseReference.once(),
+        future: databaseReference.child(uid).once(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

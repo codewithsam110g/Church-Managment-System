@@ -1,13 +1,81 @@
+import 'package:church_management_system/pages/create_profile_page.dart';
 import 'package:church_management_system/pages/members/add_attendance.dart';
 import 'package:church_management_system/pages/members/members_list.dart';
 import 'package:church_management_system/pages/members/new_members_list.dart';
+import 'package:church_management_system/pages/members/unattended_list.dart';
+import 'package:church_management_system/pages/objects/Member.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:church_management_system/auth.dart';
 import "package:firebase_auth/firebase_auth.dart";
 import 'members/add_new_members.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int this_month = 0, this_year = 0, last_month = 0, last_year = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    checkForFirstTimer();
+    checkAndUpdateReports();
+  }
+
+  void checkAndUpdateReports() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
+    final snapshot =
+        await FirebaseDatabase.instance.ref("UserData/Members/$uid").get();
+    if (snapshot.exists) {
+      snapshot.children.forEach((e) {
+        final value = e.value as Map;
+        Member m = Member.fromMap(value['id'], value);
+        DateTime? date = m.addedDate;
+        DateTime now = DateTime.now();
+        if (date!.year == now.year) {
+          if (date.month == now.month) {
+            this_month++;
+            this_year++;
+          } else if (date.month == now.month - 1) {
+            last_month++;
+            this_year++;
+          } else {
+            this_year++;
+          }
+        } else if (date.year == now.year - 1) {
+          if (date.month == 12 && now.month == 1) {
+            last_month++;
+          } else {
+            last_year++;
+          }
+        } else {
+          last_year++;
+        }
+      });
+      setState(() {});
+    }
+  }
+
+  void checkForFirstTimer() async {
+    String uid = FirebaseAuth.instance.currentUser?.uid ?? "";
+    final ref = FirebaseDatabase.instance.ref("Users").child(uid);
+    final snapshot = await ref.get();
+    if (snapshot.value == null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) {
+            return const CreateProfilePage();
+          },
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,10 +122,10 @@ class HomePage extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          buildCard('This Month', context),
-          buildCard('Last Month', context),
-          buildCard('This Year', context),
-          buildCard('Last Year', context),
+          buildCard('This Month: ' + this_month.toString(), context),
+          buildCard('Last Month: ' + last_month.toString(), context),
+          buildCard('This Year: ' + this_year.toString(), context),
+          buildCard('Last Year: ' + last_year.toString(), context),
         ],
       ),
     );
@@ -100,34 +168,18 @@ class HomePage extends StatelessWidget {
                 {
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) {
-                      return const NewMembersPage();
+                      return NewMembersPage();
                     },
                   ));
                   break;
                 }
               case "Call list for Unattended Members":
                 {
-                  print("Call list for Unattended Members Selected!");
-                  break;
-                }
-              case "This Month":
-                {
-                  print("This Month Selected!");
-                  break;
-                }
-              case "Last Month":
-                {
-                  print("Last Month Selected!");
-                  break;
-                }
-              case "This Year":
-                {
-                  print("This Year Selected!");
-                  break;
-                }
-              case "Last Year":
-                {
-                  print("Last Year Selected!");
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) {
+                      return const CallList();
+                    },
+                  ));
                   break;
                 }
             }
